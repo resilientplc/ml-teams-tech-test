@@ -8,7 +8,6 @@ Please write your solution in Python.
 
 To send us your solution you can do any of the following:
 - send us the link of your git repo (if it's a private repo, please give us access)
-- send us a zip git repo. Make sure to include commit history by including the .git dir.
 - fork this repo as a private fork and give us the access to the following github usernames
   - @sakher
   - @mbeveridge-resilient
