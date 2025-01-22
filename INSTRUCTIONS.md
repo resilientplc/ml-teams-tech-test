@@ -6,9 +6,11 @@ We know that you're busy and we wanted to give you the chance to show us what yo
 
 Please write your solution in Python.
 
-To send us your solution you can do any of the following:
-- send us the link of your git repo (if it's a private repo, please give us access)
-- fork this repo as a private fork and give us the access to the following github usernames
+Please use a git repository
+
+- We ask that you make use of more than 1 commit
+- Please send us a link to your private repository and add the following as collaborators:
+
   - @sakher
   - @mbeveridge-resilient
   - @souravehere
