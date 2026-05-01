@@ -11,12 +11,10 @@ Please use a git repository
 - We ask that you make use of more than 1 commit
 - Please send us a link to your private repository and add the following as collaborators:
 
-  - @sakher
   - @mbeveridge-resilient
-  - @souravehere
-  - @jthomart-resilient
-  - @pmattingley-resilient
-  - @amaxim-resilient   
+  - @rdunn-resilient
+  - @dseaton-resilient
+  - @srana-resilient
 
 Please feel free to reach us out if you have any questions/doubts.
 
