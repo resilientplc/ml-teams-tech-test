@@ -1,161 +1,120 @@
-# ML Teams Tech Test
+# ML Engineer — Take-Home Technical Test
 
-## Instructions
+## Overview
 
-We know that you're busy and we wanted to give you the chance to show us what you can do, so we designed this task to take approximately 2 hours to complete.
+We know you're busy, so we've designed this test to take approximately **2.5–3 hours**. Please don't spend significantly more than that — we're not looking for a production system, and a clear, well-reasoned partial solution tells us more than an over-engineered one.
 
-Please write your solution in Python.
+This test is a simplified reflection of work we do day-to-day: ingesting and transforming data, building models to detect suspicious caller behaviour, and thinking carefully about how those models perform.
 
-Please use a git repository
+Please write your solution in **Python**.
 
-- We ask that you make use of more than 1 commit
-- Please send us a link to your private repository and add the following as collaborators:
+---
 
-  - @mbeveridge-resilient
-  - @rdunn-resilient
-  - @dseaton-resilient
-  - @srana-resilient
+## Submission
 
-Please feel free to reach us out if you have any questions/doubts.
+- Use a **git repository** and make **more than one commit** — we'd like to see your thought process, not just the end result
+- Include a **README** explaining how to run your solution end-to-end
+- Send us a link to your **private repository** and add the following as collaborators:
+  - `@mbeveridge-resilient`
+  - `@rdunn-resilient`
+  - `@dseaton-resilient`
+  - `@srana-resilient`
 
-## Context
+Please reach out if you have any questions.
 
-In the ML teams, one of our typical activities might look like the following:
-- ingest input data
-- enrich with various external/internal information
-- present the transformed data
+---
 
-This tech test is a simplified sample from one of our real systems.
+## Part 1 — Data Pipeline
 
-## Task
+### Context
 
-Build a program which from two sources of data (calls and network operators) generates a CSV report.
+In the ML team, a typical task involves ingesting raw data from multiple sources, transforming and enriching it, and producing a clean dataset for downstream use — whether that's a report, a model training job, or a monitoring dashboard.
 
-### Input: calls
+### Task
 
-The first source is a JSON document containing phone calls:
+Build a program that reads two input files and produces a single CSV file.
 
-```json
-{
-  "data": [
-    {
-      "type": "call",
-      "id": "2c4fae60-cf43-4f27-869e-a9ed8b0ca25b",
-      "attributes": {
-        "date": "2020-10-12T07:20:50.52Z",
-        "riskScore": 0.431513435443,
-        "number": "+44123456789",
-        "greenList": true,
-        "redList": false
-      }
-    },
-    {
-      "type": "call",
-      "id": "8f1b1354-26d2-4e16-9582-9156a0d9a5de",
-      "attributes": {
-        "date": "2019-10-12T07:20:50.52Z",
-        "riskScore": 0.123444,
-        "number": "+44123456789",
-        "greenList": false,
-        "redList": true
-      }
-    }
-  ]
-}
-```
+### Input: `data/calls.json`
 
-Where:
-| field                | type   | description                                                    | example                                |
-|----------------------|--------|----------------------------------------------------------------|----------------------------------------|
-| type                 | string | always "call"                                                  | "call"                                 |
-| id                   | string | UUID                                                           | "8f1b1354-26d2-4e16-9582-9156a0d9a5de" |
-| attributes.date      | string | UTC date in RFC 3339 format                                    | "2019-10-12T07:20:50.52Z"              |
-| attributes.riskScore | float  | number between 0.0 (not risky)  and 1.0 (potential fraud call) | 0.1231351351435                        |
-| attributes.number    | string | phone number in E164 format                                    | +4467464311354153                      |
-| attributes.greenList | bool   | the call is not risky regardless of the risk score             | true                                   |
-| attributes.redList   | bool   | the call is fraud regardless of the risk score                 | false                                  |
+A JSON document containing records of incoming phone calls. Each call has the following fields:
 
-### Input: operators
+| Field | Type | Description | Example |
+|---|---|---|---|
+| `type` | string | Always `"call"` | `"call"` |
+| `id` | string | UUID | `"8f1b1354-..."` |
+| `attributes.date` | string | UTC datetime in RFC 3339 format | `"2020-10-12T07:20:50Z"` |
+| `attributes.number` | string | Phone number in E.164 format — may be absent | `"+44123456789"` |
+| `attributes.duration_seconds` | int | Length of the call in seconds — may be null | `183` |
+| `attributes.num_calls_last_30_days` | int | Number of calls from this number in the last 30 days — may be null | `7` |
+| `attributes.time_of_day` | string | Period of day: `morning`, `afternoon`, `evening`, or `night` | `"evening"` |
+| `attributes.label` | int | Ground truth: `1` = suspicious, `0` = not suspicious | `0` |
 
-The second source is a JSON document containing phone operators:
+> **Note:** The data contains a number of real-world quality issues. Part of the task is identifying and handling these appropriately. We'd like to see your decisions documented.
 
-```json
-{
-  "data": [
-    {
-      "type": "operator",
-      "id": "2c4fae60-cf43-4f27-869e-a9ed8b0ca25b",
-      "attributes": {
-        "prefix": "1000",
-        "operator": "Vodafone"
-      }
-    },
-    {
-      "type": "operator",
-      "id": "8f1b1354-26d2-4e16-9582-9156a0d9a5de",
-      "attributes": {
-        "prefix": "2000",
-        "operator": "EE"
-      }
-    }
-  ]
-}
-```
+### Input: `data/operators.json`
 
-Where:
-| field               | type   | description                    | example                                |
-|---------------------|--------|--------------------------------|----------------------------------------|
-| type                | string | always "operator"              | "operator"                             |
-| id                  | string | UUID                           | "8f1b1354-26d2-4e16-9582-9156a0d9a5de" |
-| attributes.prefix   | string | prefix range - see below       | "2000"                                 |
-| attributes.operator | string | the name of the phone operator | "Vodafone"                             |
+A JSON document containing phone operator prefix mappings. A prefix of `"3000"` means any national number whose first four digits fall in the range `3000–3999` belongs to that operator:
 
-If the prefix range is "2000", it means that a national number starting with that prefix belongs to that phone operator:
-- `+442143999888`: belongs to the operator, it can be broken down as `+44-2143-999888` and `2143` is in the range 2000-2999
-- `+448423666777`: does not belong to the operator, it can be broken down as `+44-8423-666777` and `8423` is not in the range 2000-2999
+- `+443642728615` → national number `3642728615` → prefix `3642` → in range `3000–3999` → **EE**
+- `+448423666777` → national number `8423666777` → prefix `8423` → in range `8000–8999` → **Orange**
 
 ### Output
 
-The program might generate the following CSV from the 2 sources of data (this CSV sample is *not* linked to the 2 JSON examples from above):
-```csv
-id,date,number,operator,riskScore
-b9db7910-004a-48a9-9fa3-718662b40bf7,2018-10-12,+441234567890,Vodafone,0.0
-84effcca-39aa-424c-961f-34ad09074b42,2018-10-13,+447897949132,Swisstelecom,0.2
-ffde08d9-6999-48ec-a6d9-9cf1dd28089e,2019-10-13,+449876460460,Unknown,1.0
-db48da6c-6cb8-43d5-9637-5906b295fd20,2020-11-12,+449494101010,EE,0.3
-911ea345-c58c-4688-bd9a-725263a1540b,2023-11-12,Withheld,Unknown,0.9
-cd62116b-9e31-41fd-a7e5-018d7a7d6533,2023-11-12,Withheld,Unknown,0.5
+Produce a CSV file at `output/calls.csv` with the following columns:
+
+```
+id,date,number,operator,duration_seconds,num_calls_last_30_days,time_of_day,label
 ```
 
-Where:
-- `id`: the call id
-- `date`: the date of the call with the `YYYY-MM-DD` format
-- `number`: the call number
-- `operator`: the operator obtained by a lookup in the operators JSON data source based on the number phone
-- `riskScore`: the presented risk score (see the rules below)
+Rules:
 
-The rules for the risk score calculation are:
-- rounded half up to 1 DP (i.e. half way values or above are rounded up, values below half way are rounded down) 
-  - e.g. 0.41 rounds to 0.4, 0.45 rounds to 0.5, 0.48 rounds to 0.5   
-- if on the green list, the value is 0.0
-- if on the red list, the value is 1.0
-- being on the green list has precedence on the red list (e.g. if a call is on the green list and the red list, the risk score will be 0.0)
+- `date` should be formatted as `YYYY-MM-DD`
+- `number` should be `Withheld` if absent
+- `operator` should be `Unknown` if no matching prefix is found
+- Rows should be ordered by ascending date
+- Rows with malformed or unparseable dates should be excluded from the output — document how many were dropped and why
+- Duplicate call IDs should be deduplicated — document your strategy for which record to keep
 
-Misc rules:
-- if the operator cannot be found, "Unknown" should be displayed as the operator field
-- if the number is absent, "Withheld" should be displayed as the number field
-- the calls are ordered by ascending date
+---
 
-## What we expect
+## Part 2 — Classifier
 
-- clean code practices
-- relevant usage of software design patterns
-- relevant test coverage
-- simple README to explain how to run your program
-- regular committing to see your thoughts process
+### Task
 
-## Input data
+Using the CSV produced in Part 1, train a binary classifier to predict `label` (1 = suspicious call, 0 = not suspicious). We are deliberately leaving the choice of algorithm and approach open. 
 
-- the calls JSON data file: `data/calls.json`
-- the operators JSON data file: `data/operators.json`
+**Do not worry about achieving good prediction performance** — the data provided is a small synthetic dataset so that will likely not be possible. We just want to see your approach and reasoning in attempting to build a model (however good or bad it is). 
 
+### What we're looking for
+
+**Feature choices** — which columns do you use, and how do you prepare them? Not all columns in the CSV will necessarily make good features.
+
+**Handling missing values** — some rows have nulls in `duration_seconds` and `num_calls_last_30_days`. Please document your imputation or exclusion strategy and why you chose it.
+
+**Train/test methodology** — use an appropriate evaluation methodology and be prepared to explain the tradeoffs of your choice.
+
+**Metric selection** — choose an evaluation metric (or metrics) appropriate for this problem and justify your choice.
+
+**Reporting** — include a short written summary in the README covering:
+  - Your evaluation approach
+  - Your evaluation results
+  - Anything you'd change or investigate with more time
+
+### Constraints
+
+- Your solution should run on a standard laptop without a GPU
+- Keep dependencies reasonable — standard scientific Python stack is fine (`scikit-learn`, `pandas`, `numpy`, etc.)
+
+---
+
+## What we assess
+
+| Area | What we look for |
+|---|---|
+| Code quality | Clarity, structure, appropriate use of abstractions |
+| Data handling | Awareness and documentation of quality issues |
+| ML reasoning | Metric choice, methodology, honest evaluation |
+| Communication | README quality, documented decisions |
+| Testing | Relevant test coverage of core logic |
+
+We review your submission together in a follow-up interview, where we'll ask you to walk us through your approach and discuss the decisions you made.
