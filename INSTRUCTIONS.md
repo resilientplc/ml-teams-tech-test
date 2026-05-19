@@ -28,7 +28,7 @@ In the ML team, a typical task involves ingesting raw data from multiple sources
 
 ### Task
 
-Build a program that reads two input files and produces a single CSV file.
+Build a program that reads two input files and produces a single CSV file. The input data files are provided in the `data` directory of this repo.
 
 ### Input: `data/calls.json`
 
