@@ -14,11 +14,7 @@ Please write your solution in **Python**.
 
 - Use a **git repository** and make **more than one commit** — we'd like to see your thought process, not just the end result
 - Include a **README** explaining how to run your solution end-to-end
-- Send us a link to your **private repository** and add the following as collaborators:
-  - `@mbeveridge-resilient`
-  - `@rdunn-resilient`
-  - `@dseaton-resilient`
-  - `@srana-resilient`
+- Send us a link to your **private repository** (adding `mbeveridge-resilient` as a collaborator) or send a zipped-up copy of your whole local repository to `m.beveridge@smartnumbers.com`.
 
 Please reach out if you have any questions.
 
