@@ -6,7 +6,7 @@ We know you're busy, so we've designed this test to take approximately **2.5–3
 
 This test is a simplified reflection of work we do day-to-day: ingesting and transforming data, building models to detect suspicious caller behaviour, and thinking carefully about how those models perform.
 
-Please write your solution in **Python**.
+Please write your solution in **Python**. If you use AI to assist you, make sure you understand the overall solution, including any AI contributions, and are able to defend all parts of it in a code review.   
 
 ---
 
